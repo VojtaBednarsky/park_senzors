@@ -12,7 +12,7 @@
 ## Introduction
 This project is meant to realize a parring sensor using ultrasonic module HC-SR04 and micro-controller atmega328p. Completed version suppose to measure efficiently and precisely distance to the obstacle and give a quick response displaying distance on four seven segment module also depicting it with LED s and by giving sound signals. 
 
-Project is written in  C tested with a avr-gcc compiler and loaded through SPI avrdude uploader. 
+Project is written in  C, tested with a avr-gcc compiler and loaded through SPI avrdude uploader. 
 
 
 ## Hardware
