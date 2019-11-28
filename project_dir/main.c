@@ -1,24 +1,22 @@
 #include <avr/io.h>
-#include <avr/interrupt.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include "gpio.h"
 #include "uart.h"
 #include "timer.h"
-#include "segment.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <avr/interrupt.h>
+#include <util/delay.h>
 
 #define S_velosity 340 / 10
-#define TRIGER_PIN PB1
-#define TRIGER 9600
 #define UART_BAUD_RATE 9600
 
-float ECHO_time = 0;
-float distance = 0;
-uint16_t distance_int = 0;
-uint16_t distance_decimal = 0;
-uint16_t ticks_rise = 0;
-uint16_t ticks_fall = 0;
-uint16_t count = 0;
+volatile float ECHO_time = 0;
+volatile float distance = 0;
+volatile uint16_t distance_int = 0;
+volatile uint16_t distance_decimal = 0;
+volatile uint16_t ticks_rise = 0;
+volatile uint16_t ticks_fall = 0;
+volatile uint16_t count = 0;
 char string[5];
 
 typedef enum {
@@ -39,7 +37,7 @@ int main() {
   TIMSK1 |= _BV(ICIE1);
   TCCR1B |= _BV(ICES1) | _BV(ICNC1);
 
-  GPIO_config_input_nopull( &DDRB, TRIGER_PIN);
+  GPIO_config_input_nopull( & DDRB, PB1);
 
   uart_init(UART_BAUD_SELECT(UART_BAUD_RATE, F_CPU));
 
@@ -51,25 +49,24 @@ int main() {
       cli();
       if (ticks_fall > ticks_rise) {
         ECHO_time = (float)(ticks_fall - ticks_rise) / (float)(F_CPU / 256) * 1000000;
-      } 
-	  else
+      } else
         ECHO_time = (float)((65535 - ticks_rise) + ticks_fall) / (float)(F_CPU / 256) * 1000000;
 
-      distance = ((float) S_velosity * (float) ECHO_time)/(float) 2000;
+      distance = ((float) S_velosity * (float) ECHO_time) /
+        (float) 2000;
+
       distance_int = (uint16_t) distance;
-      distance_decimal = (uint16_t)((((float) distance - (float) distance_int) * 1000)) / 100;
-      
-	  
+      distance_decimal = (uint16_t)((((float) distance - (float) distance_int) *
+        1000)) / 100;
+      sei();
       sprintf(string, "%u.%u", distance_int, distance_decimal);
-	  sei();
+
     }
 
     if (distance_int < 400) {
-      	uart_puts(string);
-        uart_puts("\n\r");
-
-
-    }	
+      uart_puts(string);
+      uart_puts("\n\r");
+    }
   }
 
   return 0;
@@ -99,10 +96,13 @@ ISR(TIMER0_OVF_vect) {
   cli();
 
   count++;
+
   if (count == 1)
-    GPIO_write(&PORTB, TRIGER_PIN, 1);
+    GPIO_write( & PORTB, PB1, 1);
+
   if (count == 2)
-    GPIO_write(&PORTB, TRIGER_PIN, 0);
+    GPIO_write( & PORTB, PB1, 0);
+
   if (count == 700)
     count = 0;
 
