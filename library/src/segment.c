@@ -33,6 +33,7 @@
 #include <util/delay.h>
 #include "gpio.h"
 #include "segment.h"
+#include <math.h>
 
 /* Define ------------------------------------------------------------*/
 /* Variables ---------------------------------------------------------*/
@@ -50,58 +51,69 @@ uint8_t segment_digit[] = {
     0b10000000,      // Digit 8
     0b10010000};     // Digit 9
 
-/* Active high position 0 to 3 */
+// Active high position 0 to 3 
 uint8_t segment_position[] = {
     0b00001000,   // Position 0
     0b00000100,   // Position 1
     0b00000010,   // Position 2
     0b00000001};  // Position 3
-
+uint8_t DP = 0b01111111;
 /* Functions ---------------------------------------------------------*/
-void SEG_putc(uint8_t digit,
-              uint8_t position)
+void SEG_putc(uint8_t digit, uint8_t position, uint8_t dp)
 {
+
     uint8_t i;
-    uint8_t mask=0x00;
-    uint8_t mask1=0x00;
-
     /* Read values from look-up tables */
-    digit    = segment_digit[digit];
+    if(dp==1){
+    digit  = segment_digit[digit]&DP;
+    }
+    else
+    {
+       digit  = segment_digit[digit];
+    }
+    
     position = segment_position[position];
-
-    /* Put 1st byte to serial data */
+   /*To display digit put 1st byte to serial data */
     for (i = 0; i < 8; i++) {
-        mask |= _BV(7-i);
-        if((digit & mask) == 0){
-            GPIO_write(&PORTB, SEGMENT_DATA, 0);
-        }
-        else GPIO_write(&PORTB, SEGMENT_DATA, 1);
-        mask= mask >> 1;
+        GPIO_write(&PORTB, SEGMENT_DATA, bit_is_set(digit, 7-i));
         SEG_toggle_clk();
     }
-    /* Put 2nd byte to serial data */
+    /*To select one of four position put 2nd byte to serial data */
     for (i = 0; i < 8; i++) {
-         mask1 |= _BV(7-i);
-        if((position & mask1) == 0){
-            GPIO_write(&PORTB, SEGMENT_DATA, 0);
-        }
-        else GPIO_write(&PORTB, SEGMENT_DATA, 1);
-        mask1= mask1 >> 1;
+        GPIO_write(&PORTB, SEGMENT_DATA, bit_is_set(position, 7-i));
         SEG_toggle_clk();
     }
-
-    /* TODO: Generate 1 us latch pulse */
-    GPIO_write(&PORTD, SEGMENT_LATCH, 0);
-    _delay_us(1);
+    
     GPIO_write(&PORTD, SEGMENT_LATCH, 1);
     _delay_us(1);
+    GPIO_write(&PORTD, SEGMENT_LATCH, 0);
 }
-
 /*--------------------------------------------------------------------*/
-/* TODO: Generate 1 us latch pulse */
 void SEG_toggle_clk(void)
 {
+    _delay_us(1);
     GPIO_write(&PORTD, SEGMENT_CLK, 1);
-     _delay_us(1);
-    GPIO_write(&PORTD, SEGMENT_CLK, 0); 
+    _delay_us(1);
+    GPIO_write(&PORTD, SEGMENT_CLK, 0);
+
+}
+/*--------------------------------------------------------------------*/
+void four_dig_print(double digits){
+
+    uint16_t digit;
+    double dec;
+    double fractional = modf(digits, &dec);
+    fractional = fractional/0.1;  
+    // float t = 0.5;
+    digit = (int)dec;
+    uint16_t numb1= digit/100;
+    if(numb1!=0)
+    SEG_putc(numb1, 3, 0);
+    uint16_t numb2= (digit%100)/10;
+    if(numb2!=0)
+    SEG_putc(numb2, 2, 0);
+    uint16_t numb3= (digit%10);
+    SEG_putc(numb3, 1, 1);
+    uint8_t numb4= (digit%10);
+    SEG_putc(fractional, 0, 0);
 }
