@@ -33,6 +33,7 @@ TBD
 1. Microchip, [AVR 8-bit Toolchain for Windows, Linux, Mac OS X](https://www.microchip.com/mplab/avr-support/avr-and-arm-toolchains-c-compilers)
 2. http://ww1.microchip.com/downloads/en/DeviceDoc/ATmega48A-PA-88A-PA-168A-PA-328-P-DS-DS40002061A.pdf
 3. https://www.mpja.com/download/hc-sr04_ultrasonic_module_user_guidejohn.pdf
+4. https://howtomechatronics.com/tutorials/arduino/ultrasonic-sensor-hc-sr04/
 
 ## All rights reserved!
 The libraries code are use from 
