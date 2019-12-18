@@ -33,13 +33,14 @@ state;
 
 state current_state = DOWN;
 state next_state = UP;
+
 //-----------------Timers configuration with functional registers set up-------------------------//
 int main() {
 
   GPIO_config_output(&DDRD, SEGMENT_CLK);				//Configure clock pin of 7-seg display;
   GPIO_config_output(&DDRD, SEGMENT_LATCH);				//Configure latch pulse pin of 7-seg display;
  
-  DDRB |= _BV(SEGMENT_DATA);							//Configure data pin of 7-seg display;
+  DDRB |= _BV(SEGMENT_DATA);						//Configure data pin of 7-seg display;
   PORTB &= ~_BV(SEGMENT_DATA);
 
 
@@ -47,16 +48,16 @@ int main() {
   GPIO_write(&PORTD, SEGMENT_LATCH, 0);  
  
   TIM_config_prescaler(TIM0, TIM_PRESC_1); 				//Configure Timer_0 prescaler;
-  TIM_config_interrupt(TIM0, TIM_OVERFLOW_ENABLE); 		//Enable interrupt on overflov;
+  TIM_config_interrupt(TIM0, TIM_OVERFLOW_ENABLE); 			//Enable interrupt on overflov;
 
   TIM_config_prescaler(TIM2, TIM_PRESC_8);				//Configure Timer_2 for buzer functionality;
   TIM_config_interrupt(TIM2, TIM_OVERFLOW_ENABLE);  
 
-  TIM_config_prescaler(TIM1, TIM_PRESC_256); 			//Configure Timer_1 prescaler;
-  TIMSK1 |= _BV(ICIE1); 								//Input Capture Interrupt Enable;
+  TIM_config_prescaler(TIM1, TIM_PRESC_256); 				//Configure Timer_1 prescaler;
+  TIMSK1 |= _BV(ICIE1); 						//Input Capture Interrupt Enable;
   TCCR1B |= _BV(ICES1) | _BV(ICNC1); 					//Set up Input Capture Edge Select and Enable Input Capture Noise Canceler;
 
-  DDRB |= _BV(PB1);										//Confugure triger pin;
+  DDRB |= _BV(PB1);							//Confugure triger pin;
   PORTB &= ~_BV(PB1);
 
   DDRD |= _BV(PD3);
@@ -64,6 +65,7 @@ int main() {
 
 
   sei();
+  
 //-----------------Infinitive For cycle to translate 16-bit data to float varible of distance----------//
   for (;;) {
 
@@ -84,7 +86,7 @@ int main() {
 	  sei();
     }
 
-    four_dig_print(distance);				// Print distance on 7-segment;
+    four_dig_print(distance);						// Print distance on 7-segment;
   }
 
   return 0;
@@ -92,26 +94,26 @@ int main() {
 
 
 
-ISR(TIMER1_CAPT_vect) { 					//on interrupt we get data, when pin changes its state;
+ISR(TIMER1_CAPT_vect) { 						//on interrupt we get data, when pin changes its state;
 
   if (next_state == UP) {
-    ticks_rise = ICR1L; 					//colect low 8bit of timer;
-    ticks_rise |= (ICR1H << 8);				//colect high 8bit of timer;
-    TCCR1B &= ~_BV(ICES1);					//Reverse edge detector;
-    current_state = UP;						//Change state status;
+    ticks_rise = ICR1L; 						//colect low 8bit of timer;
+    ticks_rise |= (ICR1H << 8);						//colect high 8bit of timer;
+    TCCR1B &= ~_BV(ICES1);						//Reverse edge detector;
+    current_state = UP;							//Change state status;
     next_state = DOWN;
 
   } else {
     ticks_fall = ICR1L;
     ticks_fall |= (ICR1H << 8);
-    TCCR1B |= _BV(ICES1); 					//Reverse edge detector;
+    TCCR1B |= _BV(ICES1); 						//Reverse edge detector;
 
-    current_state = DOWN;					//Change state status;
+    current_state = DOWN;						//Change state status;
     next_state = UP;
   }
 }
 
-ISR(TIMER0_OVF_vect) {  					// Timer configured to send pulse once in 700 overflovs; 
+ISR(TIMER0_OVF_vect) {  						// Timer configured to send pulse once in 700 overflovs; 
 
   cli();
 
@@ -125,7 +127,7 @@ ISR(TIMER0_OVF_vect) {  					// Timer configured to send pulse once in 700 overf
 
   sei();
 }
-ISR(TIMER2_OVF_vect)   				//Timer oferflov interrupt to run buzer function;
+ISR(TIMER2_OVF_vect)   							//Timer oferflov interrupt to run buzer function;
 {
   BZR(distance_int);
 
@@ -133,9 +135,9 @@ ISR(TIMER2_OVF_vect)   				//Timer oferflov interrupt to run buzer function;
 
 
 
-void BZR(uint16_t dist)  			//Buzer function to express distance
+void BZR(uint16_t dist)  						//Buzer function to express distance
 {
-uint16_t delay=0;					//Function configured for higher tone signalization on closer distance and higher delay pause on longer distance; 
+uint16_t delay=0;							//Function configured for higher tone signalization on closer distance and higher delay pause on longer distance; 
 uint16_t  freq=0;
   
  if (dist<=400 && dist>200) { freq=20; delay=6000; }
